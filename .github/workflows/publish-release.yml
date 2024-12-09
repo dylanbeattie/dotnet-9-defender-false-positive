@@ -1,0 +1,46 @@
+name: build-windows-binary
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+      - name: dotnet publish
+        run: dotnet publish HelloWorld -o helloworld -c Release
+      - name: create download assets
+        run: |
+          ls -lR
+          zip helloworld-${{ github.run_number }}-windows-x64.zip helloworld/HelloWorld.exe
+      - name: create release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          draft: false
+          prerelease: false
+          release_name: helloworld-v${{ github.run_number }}
+          tag_name: v${{ github.run_number }}
+          body: |
+            HelloWorld v${{ steps.version.outputs.version }}
+
+            Windows Defender and Google Chrome will report the binaries
+            ZIP files in this release as containing malware.
+
+            They don't.
+
+      - name: upload ZIP file
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./helloworld-${{ github.run_number }}-windows-x64.zip
+          asset_name: helloworld-${{ github.run_number }}-windows-x64.zip
+          asset_content_type: application/zip
