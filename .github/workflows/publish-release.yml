@@ -15,7 +15,6 @@ jobs:
         run: dotnet publish HelloWorld -o helloworld -c Release
       - name: create download assets
         run: |
-          ls -lR
           zip helloworld-${{ github.run_number }}-windows-x64.zip helloworld/HelloWorld.exe
       - name: create release
         uses: actions/create-release@v1
